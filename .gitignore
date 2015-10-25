@@ -3,3 +3,8 @@
 *.iml
 build
 /bin/
+
+#eclipse files
+.project
+.classpath
+.settings/

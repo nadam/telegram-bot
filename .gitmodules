@@ -3,7 +3,7 @@
 	url = https://github.com/nadam/telegram-api.git
 [submodule "libraries/mtproto"]
 	path = libraries/mtproto
-	url = https://github.com/ex3ndr/telegram-mt.git
+	url = https://github.com/nadam/telegram-mt.git
 [submodule "libraries/tl-core"]
 	path = libraries/tl-core
-	url = https://github.com/ex3ndr/telegram-tl-core.git
+	url = https://github.com/nadam/telegram-tl-core.git

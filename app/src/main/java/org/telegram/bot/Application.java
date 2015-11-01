@@ -1,18 +1,5 @@
 package org.telegram.bot;
 
-import org.telegram.api.*;
-import org.telegram.api.auth.TLAuthorization;
-import org.telegram.api.auth.TLSentCode;
-import org.telegram.api.engine.*;
-import org.telegram.api.engine.file.Uploader;
-import org.telegram.api.messages.TLAbsSentMessage;
-import org.telegram.api.messages.TLAbsStatedMessage;
-import org.telegram.api.requests.*;
-import org.telegram.api.updates.TLState;
-import org.telegram.bot.engine.MemoryApiState;
-import org.telegram.mtproto.log.LogInterface;
-import org.telegram.mtproto.log.Logger;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -21,6 +8,40 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import org.telegram.api.TLAbsInputFile;
+import org.telegram.api.TLAbsInputPeer;
+import org.telegram.api.TLAbsUpdates;
+import org.telegram.api.TLConfig;
+import org.telegram.api.TLInputFile;
+import org.telegram.api.TLInputFileBig;
+import org.telegram.api.TLInputMediaUploadedPhoto;
+import org.telegram.api.TLInputPeerChat;
+import org.telegram.api.TLInputPeerContact;
+import org.telegram.api.TLUpdateShortChatMessage;
+import org.telegram.api.TLUpdateShortMessage;
+import org.telegram.api.auth.TLAbsSentCode;
+import org.telegram.api.auth.TLAuthorization;
+import org.telegram.api.engine.ApiCallback;
+import org.telegram.api.engine.AppInfo;
+import org.telegram.api.engine.LoggerInterface;
+import org.telegram.api.engine.RpcCallbackEx;
+import org.telegram.api.engine.RpcException;
+import org.telegram.api.engine.TelegramApi;
+import org.telegram.api.engine.file.Uploader;
+import org.telegram.api.messages.TLAbsSentMessage;
+import org.telegram.api.messages.TLAbsStatedMessage;
+import org.telegram.api.requests.TLRequestAccountUpdateStatus;
+import org.telegram.api.requests.TLRequestAuthSendCode;
+import org.telegram.api.requests.TLRequestAuthSignIn;
+import org.telegram.api.requests.TLRequestHelpGetConfig;
+import org.telegram.api.requests.TLRequestMessagesSendMedia;
+import org.telegram.api.requests.TLRequestMessagesSendMessage;
+import org.telegram.api.requests.TLRequestUpdatesGetState;
+import org.telegram.api.updates.TLState;
+import org.telegram.bot.engine.MemoryApiState;
+import org.telegram.mtproto.log.LogInterface;
+import org.telegram.mtproto.log.Logger;
 
 /**
  * Created by ex3ndr on 13.01.14.
@@ -383,7 +404,7 @@ public class Application {
         System.out.print("Phone number for bot:");
         String phone = reader.readLine();
         System.out.print("Sending sms to phone " + phone + "...");
-        TLSentCode sentCode;
+		TLAbsSentCode sentCode;
         try {
             sentCode = api.doRpcCallNonAuth(new TLRequestAuthSendCode(phone, 0, 5, "1c5c96d5edd401b1ed40db3fb5633e2d", "en"));
         } catch (RpcException e) {

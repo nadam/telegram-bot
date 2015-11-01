@@ -47,7 +47,12 @@ import org.telegram.mtproto.log.Logger;
  * Created by ex3ndr on 13.01.14.
  */
 public class Application {
-    private static HashMap<Integer, PeerState> userStates = new HashMap<Integer, PeerState>();
+
+	// Note! Change these values to your own api_id and api_hash.
+	private static final int API_ID = 5;
+    private static final String API_HASH = "1c5c96d5edd401b1ed40db3fb5633e2d";
+
+	private static HashMap<Integer, PeerState> userStates = new HashMap<Integer, PeerState>();
     private static HashMap<Integer, PeerState> chatStates = new HashMap<Integer, PeerState>();
     private static MemoryApiState apiState;
     private static TelegramApi api;
@@ -372,7 +377,7 @@ public class Application {
             System.out.println("Using test servers");
         }
         apiState = new MemoryApiState(useTest);
-        api = new TelegramApi(apiState, new AppInfo(5, "console", "???", "???", "en"), new ApiCallback() {
+        api = new TelegramApi(apiState, new AppInfo(API_ID, "console", "???", "???", "en"), new ApiCallback() {
 
             @Override
             public void onAuthCancelled(TelegramApi api) {
@@ -406,7 +411,7 @@ public class Application {
         System.out.print("Sending sms to phone " + phone + "...");
 		TLAbsSentCode sentCode;
         try {
-            sentCode = api.doRpcCallNonAuth(new TLRequestAuthSendCode(phone, 0, 5, "1c5c96d5edd401b1ed40db3fb5633e2d", "en"));
+            sentCode = api.doRpcCallNonAuth(new TLRequestAuthSendCode(phone, 0, API_ID, API_HASH, "en"));
         } catch (RpcException e) {
             if (e.getErrorCode() == 303) {
                 int destDC;
@@ -420,7 +425,7 @@ public class Application {
                     throw e;
                 }
                 api.switchToDc(destDC);
-                sentCode = api.doRpcCallNonAuth(new TLRequestAuthSendCode(phone, 0, 5, "1c5c96d5edd401b1ed40db3fb5633e2d", "en"));
+                sentCode = api.doRpcCallNonAuth(new TLRequestAuthSendCode(phone, 0, API_ID, API_HASH, "en"));
             } else {
                 throw e;
             }

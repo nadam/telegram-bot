@@ -236,7 +236,7 @@ public class Application {
                     count = 32;
                 }
                 if (count > 4 * 1024) {
-                    sendMessage(peerState, WarAndPeace.ANGRY);
+					sendMessage(peerState, "Too much");
                 } else {
                     sendMessage(peerState, "Random: " + (generateRandomString(count)));
                 }
@@ -264,14 +264,6 @@ public class Application {
                     e.printStackTrace();
                 }
             }
-        } else if (command.equals("war_ping")) {
-            for (int i = 0; i < 50; i++) {
-                sendMessage(peerState, WarAndPeace.TEXT2);
-            }
-        } else if (command.equals("war")) {
-            sendMessage(peerState, WarAndPeace.TEXT2);
-        } else if (command.equals("war2")) {
-            sendMessage(peerState, WarAndPeace.TEXT);
         } else if (command.equals("help")) {
             sendMessage(peerState, "Bot commands:\n" +
                     "bot enable_forward/disable_forward - forwarding of incoming messages\n" +
@@ -279,9 +271,6 @@ public class Application {
                     "bot stop_flood - Stop flood\n" +
                     "bot random [len] - Write random string of length [len] (default = 32)\n" +
                     "bot ping - ping with 50 pongs\n" +
-                    "bot war - war and peace fragment\n" +
-                    "bot war2 - alternative war and peace fragment (currently unable to send)\n" +
-                    "bot war_ping - ping with 50 war and peace fragments\n" +
                     "bot img - sending sample image\n" +
                     "bot img50 - sending sample image\n");
 

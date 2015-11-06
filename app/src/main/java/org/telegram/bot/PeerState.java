@@ -8,7 +8,6 @@ public class PeerState {
     private boolean isUser;
     private int messagesSent;
     private long lastMessageSentTime;
-    private boolean isForwardingEnabled;
     private boolean isSpamEnabled;
     private int messageSendDelay;
 
@@ -23,14 +22,6 @@ public class PeerState {
 
     public boolean isUser() {
         return isUser;
-    }
-
-    public boolean isForwardingEnabled() {
-        return isForwardingEnabled;
-    }
-
-    public void setForwardingEnabled(boolean isForwardingEnabled) {
-        this.isForwardingEnabled = isForwardingEnabled;
     }
 
     public boolean isSpamEnabled() {

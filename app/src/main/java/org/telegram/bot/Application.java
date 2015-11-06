@@ -67,14 +67,6 @@ public class Application {
         workLoop();
     }
 
-    private static synchronized String generateRandomString(int size) {
-        String res = "";
-        for (int i = 0; i < size; i++) {
-            res += (char) ('a' + rnd.nextInt('z' - 'a'));
-        }
-        return res;
-    }
-
     private static synchronized PeerState[] getAllSpamPeers() {
         ArrayList<PeerState> peerStates = new ArrayList<PeerState>();
         for (PeerState state : userStates.values()) {
@@ -94,7 +86,6 @@ public class Application {
         if (!userStates.containsKey(uid)) {
             userStates.put(uid, new PeerState(uid, true));
         }
-
         return userStates.get(uid);
     }
 
@@ -182,10 +173,6 @@ public class Application {
         if (message.startsWith("bot")) {
             sendMessageUser(uid, "Received: " + message);
             processCommand(message.trim().substring(3).trim(), peerState);
-        } else {
-            if (peerState.isForwardingEnabled()) {
-                sendMessageUser(uid, "FW: " + message);
-            }
         }
     }
 
@@ -194,27 +181,7 @@ public class Application {
         PeerState peerState = getChatPeer(chatId);
         if (message.startsWith("bot")) {
             processCommand(message.trim().substring(3).trim(), getChatPeer(chatId));
-        } else {
-            if (peerState.isForwardingEnabled()) {
-                sendMessageChat(chatId, "FW: " + message);
-            }
         }
-    }
-
-    private static String getWalkerString(int len, int position) {
-        int realPosition = position % len * 2;
-        if (realPosition > len) {
-            realPosition = len - (realPosition - len);
-        }
-        String res = "|";
-        for (int i = 0; i < realPosition; i++) {
-            res += ".";
-        }
-        res += "\uD83D\uDEB6";
-        for (int i = realPosition + 1; i < len; i++) {
-            res += ".";
-        }
-        return res + "|";
     }
 
     private static void processCommand(String message, final PeerState peerState) {
@@ -223,27 +190,7 @@ public class Application {
             sendMessage(peerState, "Unknown command");
         }
         String command = args[0].trim().toLowerCase();
-        if (command.equals("enable_forward")) {
-            sendMessage(peerState, "Forwarding enabled");
-            peerState.setForwardingEnabled(true);
-        } else if (command.equals("disable_forward")) {
-            peerState.setForwardingEnabled(false);
-            sendMessage(peerState, "Forwarding disabled");
-        } else if (command.equals("random")) {
-            if (args.length == 2) {
-                int count = Integer.parseInt(args[1].trim());
-                if (count <= 0) {
-                    count = 32;
-                }
-                if (count > 4 * 1024) {
-					sendMessage(peerState, "Too much");
-                } else {
-                    sendMessage(peerState, "Random: " + (generateRandomString(count)));
-                }
-            } else {
-                sendMessage(peerState, "Random: " + (generateRandomString(32)));
-            }
-        } else if (command.equals("start_flood")) {
+		if (command.equals("start_flood")) {
             int delay = 15;
             if (args.length == 2) {
                 delay = Integer.parseInt(args[1].trim());
@@ -256,20 +203,11 @@ public class Application {
             peerState.setSpamEnabled(false);
             sendMessage(peerState, "Flood disabled");
         } else if (command.equals("ping")) {
-            for (int i = 0; i < 50; i++) {
-                sendMessage(peerState, "pong " + getWalkerString(10, i) + " #" + i);
-                try {
-                    Thread.sleep(20);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+			sendMessage(peerState, "pong ");
         } else if (command.equals("help")) {
             sendMessage(peerState, "Bot commands:\n" +
-                    "bot enable_forward/disable_forward - forwarding of incoming messages\n" +
                     "bot start_flood [delay] - Start flood with [delay] sec (default = 15)\n" +
                     "bot stop_flood - Stop flood\n" +
-                    "bot random [len] - Write random string of length [len] (default = 32)\n" +
                     "bot ping - ping with 50 pongs\n" +
                     "bot img - sending sample image\n" +
                     "bot img50 - sending sample image\n");
@@ -300,13 +238,11 @@ public class Application {
             try {
                 PeerState[] states = getAllSpamPeers();
                 for (PeerState state : states) {
-                    if (state.isSpamEnabled()) {
-                        if (System.currentTimeMillis() - state.getLastMessageSentTime() > state.getMessageSendDelay() * 1000L) {
-                            int messageId = state.getMessagesSent() + 1;
-                            state.setMessagesSent(messageId);
-                            sendMessage(state, "Flood " + getWalkerString(10, messageId) + " #" + messageId);
-                            state.setLastMessageSentTime(System.currentTimeMillis());
-                        }
+                    if (System.currentTimeMillis() - state.getLastMessageSentTime() > state.getMessageSendDelay() * 1000L) {
+                        int messageId = state.getMessagesSent() + 1;
+                        state.setMessagesSent(messageId);
+						sendMessage(state, "Flood " + "#" + messageId);
+                        state.setLastMessageSentTime(System.currentTimeMillis());
                     }
                 }
                 if (System.currentTimeMillis() - lastOnline > 60 * 1000) {

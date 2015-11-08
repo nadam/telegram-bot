@@ -6,10 +6,6 @@ package org.telegram.bot;
 public class PeerState {
     private int id;
     private boolean isUser;
-    private int messagesSent;
-    private long lastMessageSentTime;
-    private boolean isSpamEnabled;
-    private int messageSendDelay;
 
     public PeerState(int id, boolean isUser) {
         this.id = id;
@@ -22,37 +18,5 @@ public class PeerState {
 
     public boolean isUser() {
         return isUser;
-    }
-
-    public boolean isSpamEnabled() {
-        return isSpamEnabled;
-    }
-
-    public void setSpamEnabled(boolean isSpamEnabled) {
-        this.isSpamEnabled = isSpamEnabled;
-    }
-
-    public int getMessageSendDelay() {
-        return messageSendDelay;
-    }
-
-    public void setMessageSendDelay(int messageSendDelay) {
-        this.messageSendDelay = messageSendDelay;
-    }
-
-    public int getMessagesSent() {
-        return messagesSent;
-    }
-
-    public void setMessagesSent(int messagesSent) {
-        this.messagesSent = messagesSent;
-    }
-
-    public long getLastMessageSentTime() {
-        return lastMessageSentTime;
-    }
-
-    public void setLastMessageSentTime(long lastMessageSentTime) {
-        this.lastMessageSentTime = lastMessageSentTime;
     }
 }

@@ -3,7 +3,6 @@ package org.telegram.bot;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.Executor;
@@ -65,21 +64,6 @@ public class Application {
         createApi();
         login();
         workLoop();
-    }
-
-    private static synchronized PeerState[] getAllSpamPeers() {
-        ArrayList<PeerState> peerStates = new ArrayList<PeerState>();
-        for (PeerState state : userStates.values()) {
-            if (state.isSpamEnabled()) {
-                peerStates.add(state);
-            }
-        }
-        for (PeerState state : chatStates.values()) {
-            if (state.isSpamEnabled()) {
-                peerStates.add(state);
-            }
-        }
-        return peerStates.toArray(new PeerState[0]);
     }
 
     private static synchronized PeerState getUserPeer(int uid) {
@@ -190,24 +174,10 @@ public class Application {
             sendMessage(peerState, "Unknown command");
         }
         String command = args[0].trim().toLowerCase();
-		if (command.equals("start_flood")) {
-            int delay = 15;
-            if (args.length == 2) {
-                delay = Integer.parseInt(args[1].trim());
-            }
-            peerState.setMessageSendDelay(delay);
-            peerState.setSpamEnabled(true);
-            peerState.setLastMessageSentTime(0);
-            sendMessage(peerState, "Flood enabled with delay " + delay + " sec");
-        } else if (command.equals("stop_flood")) {
-            peerState.setSpamEnabled(false);
-            sendMessage(peerState, "Flood disabled");
-        } else if (command.equals("ping")) {
+		if (command.equals("ping")) {
 			sendMessage(peerState, "pong ");
         } else if (command.equals("help")) {
             sendMessage(peerState, "Bot commands:\n" +
-                    "bot start_flood [delay] - Start flood with [delay] sec (default = 15)\n" +
-                    "bot stop_flood - Stop flood\n" +
                     "bot ping - ping with 50 pongs\n" +
                     "bot img - sending sample image\n" +
                     "bot img50 - sending sample image\n");
@@ -236,15 +206,6 @@ public class Application {
     private static void workLoop() {
         while (true) {
             try {
-                PeerState[] states = getAllSpamPeers();
-                for (PeerState state : states) {
-                    if (System.currentTimeMillis() - state.getLastMessageSentTime() > state.getMessageSendDelay() * 1000L) {
-                        int messageId = state.getMessagesSent() + 1;
-                        state.setMessagesSent(messageId);
-						sendMessage(state, "Flood " + "#" + messageId);
-                        state.setLastMessageSentTime(System.currentTimeMillis());
-                    }
-                }
                 if (System.currentTimeMillis() - lastOnline > 60 * 1000) {
                     api.doRpcCallWeak(new TLRequestAccountUpdateStatus(false));
                     lastOnline = System.currentTimeMillis();

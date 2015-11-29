@@ -47,6 +47,7 @@ import org.telegram.mtproto.log.Logger;
  */
 public class Application {
 
+	private static final String COMMAND_PREFIX = "/";
 	// Note! Change these values to your own api_id and api_hash.
 	private static final int API_ID = 5;
     private static final String API_HASH = "1c5c96d5edd401b1ed40db3fb5633e2d";
@@ -60,7 +61,7 @@ public class Application {
     private static Executor mediaSender = Executors.newSingleThreadExecutor();
 
     public static void main(String[] args) throws IOException {
-        disableLogging();
+		setupLogging();
         createApi();
         login();
         workLoop();
@@ -153,18 +154,18 @@ public class Application {
 
     private static void onIncomingMessageUser(int uid, String message) {
         System.out.println("Incoming message from user #" + uid + ": " + message);
-        PeerState peerState = getUserPeer(uid);
-        if (message.startsWith("bot")) {
+		if (message.startsWith(COMMAND_PREFIX)) {
             sendMessageUser(uid, "Received: " + message);
-            processCommand(message.trim().substring(3).trim(), peerState);
+			PeerState peerState = getUserPeer(uid);
+			processCommand(message.trim().substring(1), peerState);
         }
     }
 
     private static void onIncomingMessageChat(int chatId, String message) {
-        System.out.println("Incoming message from in chat #" + chatId + ": " + message);
-        PeerState peerState = getChatPeer(chatId);
-        if (message.startsWith("bot")) {
-            processCommand(message.trim().substring(3).trim(), getChatPeer(chatId));
+        System.out.println("Incoming message in chat #" + chatId + ": " + message);
+		if (message.startsWith(COMMAND_PREFIX)) {
+			PeerState peerState = getChatPeer(chatId);
+			processCommand(message.trim().substring(1), peerState);
         }
     }
 
@@ -178,9 +179,9 @@ public class Application {
 			sendMessage(peerState, "pong ");
         } else if (command.equals("help")) {
             sendMessage(peerState, "Bot commands:\n" +
-                    "bot ping - ping with 50 pongs\n" +
-                    "bot img - sending sample image\n" +
-                    "bot img50 - sending sample image\n");
+            		"/help - this help text\n" +
+                    "/ping - pong\n" +
+                    "/img - sending sample image\n");
 
         } else if (command.equals("img")) {
             mediaSender.execute(new Runnable() {
@@ -189,15 +190,6 @@ public class Application {
                     sendMedia(peerState, "demo.jpg");
                 }
             });
-        } else if (command.equals("img50")) {
-            for (int i = 0; i < 50; i++) {
-                mediaSender.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        sendMedia(peerState, "demo.jpg");
-                    }
-                });
-            }
         } else {
             sendMessage(peerState, "Unknown command '" + args[0] + "'");
         }
@@ -217,11 +209,11 @@ public class Application {
         }
     }
 
-    private static void disableLogging() {
+    private static void setupLogging() {
         Logger.registerInterface(new LogInterface() {
             @Override
             public void w(String tag, String message) {
-
+				// System.out.println(tag + ": " + message);
             }
 
             @Override
@@ -231,13 +223,13 @@ public class Application {
 
             @Override
             public void e(String tag, Throwable t) {
-
+				// t.printStackTrace();
             }
         });
         org.telegram.api.engine.Logger.registerInterface(new LoggerInterface() {
             @Override
             public void w(String tag, String message) {
-
+				// System.out.println(tag + ": " + message);
             }
 
             @Override
@@ -247,7 +239,7 @@ public class Application {
 
             @Override
             public void e(String tag, Throwable t) {
-
+				// t.printStackTrace();
             }
         });
     }

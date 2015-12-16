@@ -12,7 +12,7 @@ repositories {
 dependencies {
     compile project(':tl-core')
     compile project(':mtproto')
-    compile files('../libraries/telegram-api/libs/tl-api-v10.jar')
+    compile files('../libraries/telegram-api/libs/tl-api-v18.jar')
     compile project(':telegram-api')
 }
 

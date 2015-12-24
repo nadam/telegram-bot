@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 
 import org.telegram.api.TLAbsInputFile;
 import org.telegram.api.TLAbsInputPeer;
+import org.telegram.api.TLAbsInputUser;
 import org.telegram.api.TLAbsUpdates;
 import org.telegram.api.TLConfig;
 import org.telegram.api.TLInputFile;
@@ -17,6 +18,8 @@ import org.telegram.api.TLInputFileBig;
 import org.telegram.api.TLInputMediaUploadedPhoto;
 import org.telegram.api.TLInputPeerChat;
 import org.telegram.api.TLInputPeerContact;
+import org.telegram.api.TLInputUserContact;
+import org.telegram.api.TLInputUserSelf;
 import org.telegram.api.TLUpdateShortChatMessage;
 import org.telegram.api.TLUpdateShortMessage;
 import org.telegram.api.auth.TLAbsSentCode;
@@ -24,7 +27,7 @@ import org.telegram.api.auth.TLAuthorization;
 import org.telegram.api.engine.ApiCallback;
 import org.telegram.api.engine.AppInfo;
 import org.telegram.api.engine.LoggerInterface;
-import org.telegram.api.engine.RpcCallbackEx;
+import org.telegram.api.engine.RpcCallback;
 import org.telegram.api.engine.RpcException;
 import org.telegram.api.engine.TelegramApi;
 import org.telegram.api.engine.file.Uploader;
@@ -34,6 +37,7 @@ import org.telegram.api.requests.TLRequestAccountUpdateStatus;
 import org.telegram.api.requests.TLRequestAuthSendCode;
 import org.telegram.api.requests.TLRequestAuthSignIn;
 import org.telegram.api.requests.TLRequestHelpGetConfig;
+import org.telegram.api.requests.TLRequestMessagesCreateChat;
 import org.telegram.api.requests.TLRequestMessagesSendMedia;
 import org.telegram.api.requests.TLRequestMessagesSendMessage;
 import org.telegram.api.requests.TLRequestUpdatesGetState;
@@ -41,6 +45,7 @@ import org.telegram.api.updates.TLState;
 import org.telegram.bot.engine.MemoryApiState;
 import org.telegram.mtproto.log.LogInterface;
 import org.telegram.mtproto.log.Logger;
+import org.telegram.tl.TLVector;
 
 /**
  * Created by ex3ndr on 13.01.14.
@@ -113,13 +118,7 @@ public class Application {
 
     private static void sendMessageChat(int chatId, String message) {
         api.doRpcCall(new TLRequestMessagesSendMessage(new TLInputPeerChat(chatId), message, rnd.nextInt()),
-                15 * 60000,
-                new RpcCallbackEx<TLAbsSentMessage>() {
-                    @Override
-                    public void onConfirmed() {
-
-                    }
-
+                new RpcCallback<TLAbsSentMessage>() {
                     @Override
                     public void onResult(TLAbsSentMessage result) {
 
@@ -133,13 +132,7 @@ public class Application {
 
     private static void sendMessageUser(int uid, String message) {
         api.doRpcCall(new TLRequestMessagesSendMessage(new TLInputPeerContact(uid), message, rnd.nextInt()),
-                15 * 60000,
-                new RpcCallbackEx<TLAbsSentMessage>() {
-                    @Override
-                    public void onConfirmed() {
-
-                    }
-
+                new RpcCallback<TLAbsSentMessage>() {
                     @Override
                     public void onResult(TLAbsSentMessage result) {
 
@@ -152,20 +145,42 @@ public class Application {
                 });
     }
 
+	private static void createGroup(int uid, final String title) {
+        TLVector<TLAbsInputUser> users = new TLVector<>();
+        users.add(new TLInputUserSelf());
+        users.add(new TLInputUserContact(uid));
+		api.doRpcCall(new TLRequestMessagesCreateChat(users, title),
+                new RpcCallback<TLAbsStatedMessage>() {
+                    @Override
+                    public void onResult(TLAbsStatedMessage result) {
+                    	System.out.println("Group created: " + title);
+                    }
+
+                    @Override
+                    public void onError(int errorCode, String message) {
+                    	System.out.println("Error creating group: " + title + ", ErrorCode: " + 
+                    			errorCode + ", Message: " + message);
+                    }
+                });
+    }
+    
     private static void onIncomingMessageUser(int uid, String message) {
         System.out.println("Incoming message from user #" + uid + ": " + message);
+		PeerState peerState = getUserPeer(uid);
 		if (message.startsWith(COMMAND_PREFIX)) {
-            sendMessageUser(uid, "Received: " + message);
-			PeerState peerState = getUserPeer(uid);
 			processCommand(message.trim().substring(1), peerState);
+		} else {
+			processCommand("help", peerState);
         }
     }
 
     private static void onIncomingMessageChat(int chatId, String message) {
         System.out.println("Incoming message in chat #" + chatId + ": " + message);
+		PeerState peerState = getChatPeer(chatId);
 		if (message.startsWith(COMMAND_PREFIX)) {
-			PeerState peerState = getChatPeer(chatId);
 			processCommand(message.trim().substring(1), peerState);
+		} else {
+			processCommand("help", peerState);
         }
     }
 
@@ -175,14 +190,24 @@ public class Application {
             sendMessage(peerState, "Unknown command");
         }
         String command = args[0].trim().toLowerCase();
+		String argument = message.substring(command.length()).trim();
 		if (command.equals("ping")) {
 			sendMessage(peerState, "pong ");
         } else if (command.equals("help")) {
             sendMessage(peerState, "Bot commands:\n" +
             		"/help - this help text\n" +
                     "/ping - pong\n" +
+            		"/create-group [name]\n" +
                     "/img - sending sample image\n");
-
+        } else if (command.equals("create-group")) {
+			if (!peerState.isUser()) {
+				sendMessage(peerState, "Not supported in group");
+			}
+			if (argument.length() > 0) {
+				createGroup(peerState.getId(), argument);
+			} else {
+				createGroup(peerState.getId(), "New Group");
+			}
         } else if (command.equals("img")) {
             mediaSender.execute(new Runnable() {
                 @Override

@@ -3,7 +3,6 @@ package org.telegram.bot;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -57,8 +56,8 @@ public class Application {
 	private static final int API_ID = 5;
     private static final String API_HASH = "1c5c96d5edd401b1ed40db3fb5633e2d";
 
-	private static HashMap<Integer, PeerState> userStates = new HashMap<Integer, PeerState>();
-    private static HashMap<Integer, PeerState> chatStates = new HashMap<Integer, PeerState>();
+	private static final int PRIVATE = 0;
+
     private static MemoryApiState apiState;
     private static TelegramApi api;
     private static Random rnd = new Random();
@@ -72,23 +71,8 @@ public class Application {
         workLoop();
     }
 
-    private static synchronized PeerState getUserPeer(int uid) {
-        if (!userStates.containsKey(uid)) {
-            userStates.put(uid, new PeerState(uid, true));
-        }
-        return userStates.get(uid);
-    }
-
-    private static synchronized PeerState getChatPeer(int chatId) {
-        if (!chatStates.containsKey(chatId)) {
-            chatStates.put(chatId, new PeerState(chatId, false));
-        }
-
-        return chatStates.get(chatId);
-    }
-
-    private static void sendMedia(PeerState peerState, String fileName) {
-        TLAbsInputPeer inputPeer = peerState.isUser() ? new TLInputPeerContact(peerState.getId()) : new TLInputPeerChat(peerState.getId());
+	private static void sendMedia(int uid, int chatId, String fileName) {
+		TLAbsInputPeer inputPeer = chatId == PRIVATE ? new TLInputPeerContact(uid) : new TLInputPeerChat(chatId);
 
         int task = api.getUploader().requestTask(fileName, null);
         api.getUploader().waitForTask(task);
@@ -108,11 +92,11 @@ public class Application {
         }
     }
 
-    private static void sendMessage(PeerState peerState, String message) {
-        if (peerState.isUser()) {
-            sendMessageUser(peerState.getId(), message);
+	private static void sendMessage(int uid, int chatId, String message) {
+		if (chatId == PRIVATE) {
+			sendMessageUser(uid, message);
         } else {
-            sendMessageChat(peerState.getId(), message);
+			sendMessageChat(chatId, message);
         }
     }
 
@@ -164,59 +148,45 @@ public class Application {
                 });
     }
     
-    private static void onIncomingMessageUser(int uid, String message) {
-        System.out.println("Incoming message from user #" + uid + ": " + message);
-		PeerState peerState = getUserPeer(uid);
+	private static void onIncomingMessage(int uid, int chatId, String message) {
+		System.out.println("Incoming message from user #" + uid + " in chat #" + chatId + ": " + message);
 		if (message.startsWith(COMMAND_PREFIX)) {
-			processCommand(message.trim().substring(1), peerState);
+			processCommand(message.trim().substring(1), uid, chatId);
 		} else {
-			processCommand("help", peerState);
+			processCommand("help", uid, chatId);
         }
     }
 
-    private static void onIncomingMessageChat(int chatId, String message) {
-        System.out.println("Incoming message in chat #" + chatId + ": " + message);
-		PeerState peerState = getChatPeer(chatId);
-		if (message.startsWith(COMMAND_PREFIX)) {
-			processCommand(message.trim().substring(1), peerState);
-		} else {
-			processCommand("help", peerState);
-        }
-    }
-
-    private static void processCommand(String message, final PeerState peerState) {
+	private static void processCommand(String message, final int uid, final int chatId) {
         String[] args = message.split(" ");
         if (args.length == 0) {
-            sendMessage(peerState, "Unknown command");
+			sendMessage(uid, chatId, "Unknown command");
         }
         String command = args[0].trim().toLowerCase();
 		String argument = message.substring(command.length()).trim();
 		if (command.equals("ping")) {
-			sendMessage(peerState, "pong ");
+			sendMessage(uid, chatId, "pong ");
         } else if (command.equals("help")) {
-            sendMessage(peerState, "Bot commands:\n" +
+			sendMessage(uid, chatId, "Bot commands:\n" +
             		"/help - this help text\n" +
                     "/ping - pong\n" +
             		"/create-group [name]\n" +
                     "/img - sending sample image\n");
         } else if (command.equals("create-group")) {
-			if (!peerState.isUser()) {
-				sendMessage(peerState, "Not supported in group");
-			}
 			if (argument.length() > 0) {
-				createGroup(peerState.getId(), argument);
+				createGroup(uid, argument);
 			} else {
-				createGroup(peerState.getId(), "New Group");
+				createGroup(uid, "New Group");
 			}
         } else if (command.equals("img")) {
             mediaSender.execute(new Runnable() {
                 @Override
                 public void run() {
-                    sendMedia(peerState, "demo.jpg");
+					sendMedia(uid, chatId, "demo.jpg");
                 }
             });
         } else {
-            sendMessage(peerState, "Unknown command '" + args[0] + "'");
+			sendMessage(uid, chatId, "Unknown command '" + args[0] + "'");
         }
     }
 
@@ -295,9 +265,11 @@ public class Application {
             @Override
             public void onUpdate(TLAbsUpdates updates) {
                 if (updates instanceof TLUpdateShortMessage) {
-                    onIncomingMessageUser(((TLUpdateShortMessage) updates).getFromId(), ((TLUpdateShortMessage) updates).getMessage());
+					TLUpdateShortMessage message = (TLUpdateShortMessage) updates;
+					onIncomingMessage(message.getFromId(), 0, message.getMessage());
                 } else if (updates instanceof TLUpdateShortChatMessage) {
-                    onIncomingMessageChat(((TLUpdateShortChatMessage) updates).getChatId(), ((TLUpdateShortChatMessage) updates).getMessage());
+					TLUpdateShortChatMessage message = (TLUpdateShortChatMessage) updates;
+					onIncomingMessage(message.getFromId(), message.getChatId(), message.getMessage());
                 }
             }
         });

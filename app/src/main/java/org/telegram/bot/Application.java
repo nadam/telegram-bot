@@ -37,6 +37,7 @@ import org.telegram.api.requests.TLRequestAuthSendCode;
 import org.telegram.api.requests.TLRequestAuthSignIn;
 import org.telegram.api.requests.TLRequestHelpGetConfig;
 import org.telegram.api.requests.TLRequestMessagesCreateChat;
+import org.telegram.api.requests.TLRequestMessagesDeleteChatUser;
 import org.telegram.api.requests.TLRequestMessagesSendMedia;
 import org.telegram.api.requests.TLRequestMessagesSendMessage;
 import org.telegram.api.requests.TLRequestUpdatesGetState;
@@ -150,6 +151,23 @@ public class Application {
                 });
     }
     
+	private static void kickUser(final int chatId, final int uid) {
+		TLAbsInputUser user = new TLInputUserContact(uid);
+		api.doRpcCall(new TLRequestMessagesDeleteChatUser(chatId, user), new RpcCallback<TLAbsStatedMessage>() {
+			@Override
+			public void onResult(TLAbsStatedMessage result) {
+				System.out.println("Kicked user " + uid + " from chat " + chatId);
+			}
+
+			@Override
+			public void onError(int errorCode, String message) {
+				System.out.println("Error kicking " + uid + " from chat " + chatId + ", ErrorCode: " + errorCode
+						+ ", Message: " + message);
+				sendMessageChat(chatId, "Error: " + message);
+			}
+		});
+	}
+
 	private static void onIncomingMessage(int uid, int chatId, String message) {
 		System.out.println("Incoming message from user #" + uid + " in chat #" + chatId + ": " + message);
 		if (message.startsWith(COMMAND_PREFIX)) {
@@ -173,12 +191,26 @@ public class Application {
             		"/help - this help text\n" +
                     "/ping - pong\n" +
             		"/create-group [name]\n" +
+            		"/kick [user id]\n" +
                     "/img - sending sample image\n");
         } else if (command.equals("create-group")) {
 			if (argument.length() > 0) {
 				createGroup(uid, argument);
 			} else {
 				createGroup(uid, "New Group");
+			}
+		} else if (command.equals("kick")) {
+			if (chatId == PRIVATE) {
+				sendMessageUser(uid, "You can only kick in groups");
+			} else if (argument.length() > 0) {
+				try {
+					int victim = Integer.parseInt(args[1]);
+					kickUser(chatId, victim);
+				} catch (NumberFormatException e) {
+					sendMessageChat(chatId, "'" + argument + "' is not a valid user id");
+				}
+			} else {
+				sendMessageChat(chatId, "Missing user id\n/kick [user id]");
 			}
         } else if (command.equals("img")) {
             mediaSender.execute(new Runnable() {

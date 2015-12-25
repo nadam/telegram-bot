@@ -129,7 +129,7 @@ public class Application {
                 });
     }
 
-	private static void createGroup(int uid, final String title) {
+	private static void createGroup(final int uid, final String title) {
         TLVector<TLAbsInputUser> users = new TLVector<>();
         users.add(new TLInputUserSelf());
         users.add(new TLInputUserContact(uid));
@@ -138,12 +138,14 @@ public class Application {
                     @Override
                     public void onResult(TLAbsStatedMessage result) {
                     	System.out.println("Group created: " + title);
+                        sendMessageUser(uid, "Group created: '" + title + "'");
                     }
 
                     @Override
                     public void onError(int errorCode, String message) {
                     	System.out.println("Error creating group: " + title + ", ErrorCode: " + 
                     			errorCode + ", Message: " + message);
+                        sendMessageUser(uid, "Error: " + message);
                     }
                 });
     }

@@ -207,7 +207,7 @@ public class Application {
 					int victim = Integer.parseInt(args[1]);
 					kickUser(chatId, victim);
 				} catch (NumberFormatException e) {
-					sendMessageChat(chatId, "'" + argument + "' is not a valid user id");
+					sendMessageChat(chatId, "'" + args[1] + "' is not a valid user id. Should be numeric.");
 				}
 			} else {
 				sendMessageChat(chatId, "Missing user id\n/kick [user id]");

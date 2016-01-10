@@ -1,5 +1,8 @@
 package org.telegram.bot;
 
+import static org.telegram.bot.BuildVars.API_HASH;
+import static org.telegram.bot.BuildVars.API_ID;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -53,9 +56,6 @@ import org.telegram.tl.TLVector;
 public class Application {
 
 	private static final String COMMAND_PREFIX = "/";
-	// Note! Change these values to your own api_id and api_hash.
-	private static final int API_ID = 5;
-    private static final String API_HASH = "1c5c96d5edd401b1ed40db3fb5633e2d";
 
 	private static final int PRIVATE = 0;
 
